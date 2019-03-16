@@ -1,0 +1,15 @@
+- hosts: all
+  remote_user: root
+  gather_facts: False
+  pre_tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      changed_when: False
+    - setup: # aka gather_facts
+
+  handlers:
+    - name: Restart ssh
+      service: name=ssh state=restarted
+      
+  roles:
+    - managed
