@@ -4,6 +4,9 @@ Usage:
   orca instances deduce [-y]
   orca instances export
   orca provision
+  orca provision new <name>
+  orca initialize
+  orca configure
 
 Options:
   -h --help     Show this screen.
@@ -66,13 +69,20 @@ if __name__ == '__main__':
             hosts = output['hosts']['value']
 
             with open('ansible/hosts', 'w') as file:
-                file.write("[nextcloud]")
+                file.write("[nextcloud]\n")
                 for host in hosts:
-                    file.write("{} ansible_ssh_private_key_file={}".format(host['address'], host['ssh_key']))
+                    file.write("{} ansible_ssh_private_key_file={} orca_public_key='{}.pub'".format(host['address'], host['ssh_key'], host['ssh_key']))
             
             print("exported {} instances to ansible/hosts".format(len(hosts)))
     elif(arguments['provision']):
-        subprocess.run(["terraform", "init"], capture_output=True)
-        subprocess.run(["terraform", "apply"])
+        if(arguments['new']):
+            print("this is where the interactive provisioning goes")
+        else:
+            subprocess.run(["terraform", "init"], capture_output=True)
+            subprocess.run(["terraform", "apply"])
+    elif(arguments['initialize']):
+        subprocess.run(["ansible-playbook", "-i", "ansible/hosts", "ansible/initialize.yaml"])
+    elif(arguments['configure']):
+        subprocess.run(["ansible-playbook", "-i", "ansible/hosts", "ansible/configure.yaml"])
     else:
         print(arguments)
