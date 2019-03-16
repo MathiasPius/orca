@@ -5,3 +5,4 @@ terraform.tfstate*
 ansible/hosts
 instances/
 terraform/instances.tf
+*.retry
