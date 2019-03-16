@@ -19,5 +19,8 @@ else:
             print("wrote {} host(s) to ansible/hosts".format(len(hosts)))
         else:
             print("unknown hosts command: {}".format(sys.argv[2]))
+    elif(sys.argv[1] == "provision"):
+        subprocess.run(["terraform", "init"], capture_output=True)
+        subprocess.run(["terraform", "apply"])
     else:
         print("unknown command: {}".format(sys.argv[1]))
