@@ -1,0 +1,15 @@
+- hosts: all
+  remote_user: orca
+  become: yes
+
+  handlers:
+    - name: restart ssh
+      service: name=sshd state=restarted
+    
+    - name: enable ufw
+      ufw:
+        state: enabled
+      notify: restart ssh
+
+  roles:
+    - managed
