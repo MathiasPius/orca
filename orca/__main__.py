@@ -4,24 +4,39 @@ Usage:
   orca instances deduce [-y]
   orca instances export
   orca provision
-  orca provision new <name>
+  orca provision new [--name=NAME] [--storage=SIZE] [--drop=DROP] [--image=IMAGE]
   orca initialize [--rerun] [--trust=NETWORK]...
   orca configure
 
 Options:
+  -h --help         show this screen.
+  --version         show version.
+
+  --name=NAME       name of the new instance.
+                    must ONLY contain letters, digits and underscores.
+                    must NOT be longer than 32 characters
+
+  --storage=SIZE    size of the attached nextcloud volume in GB. [default: 10]
+                    must be between 1-3000GB
+
+  --drop=DROP       Digital Ocean droplet size to use. [default: s-1vcpu-1gb]
+
+  --image=IMAGE     which Digital Ocean image to use. [default: ubuntu-18-04-x64]
+                    only tested with ubuntu-18-04-x64 but others may work too
+
+
   --rerun           reinitialize using 'orca' user.
                     this effectively enforces compliance with the 'managed' role,
                     but using the configured orca user, since root login is disabled
                     after the first initialization.
 
   --trust=NETWORK   source networks to trust for ssh connections. [default: any]
+                    these arguments are used when configuring ufw on the endpoint.
                     can be used multiple times to specify more networks or addresses
                     e.g. --trust=192.168.0.25 --trust=10.0.0.0/8
-                
-  -h --help     Show this screen.
-  --version     Show version.
 """
 
+import re
 import sys
 import json
 import subprocess
@@ -30,6 +45,8 @@ import tempfile
 from shutil import copyfile
 from docopt import docopt
 
+
+valid_instance_name = re.compile(r"[^a-zA-Z_0-9]")
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='Orca 0.1')
@@ -82,7 +99,42 @@ if __name__ == '__main__':
             print("exported {} instances to ansible/hosts".format(len(hosts)))
     elif(arguments['provision']):
         if(arguments['new']):
-            print("this is where the interactive provisioning goes")
+            print(arguments)
+            
+            instance_name = arguments['--name']
+            while(instance_name == None or len(instance_name) == 0 or len(instance_name) > 32 or len(valid_instance_name.findall(instance_name)) != 0):
+                if(instance_name == None):
+                    instance_name = input('instance name: ')
+                elif(len(instance_name) == 0):
+                    print("ERROR: no name given")
+                    instance_name = input('instance name: ')
+                elif(len(instance_name) > 32):
+                    print("ERROR: name too long ({}). max length: 32".format(len(instance_name)))
+                    instance_name = input('instance name: ')
+                else:
+                    invalid_chars = ", ".join(["'{}'".format(x) for x in valid_instance_name.findall(instance_name)])
+                    print("ERROR: invalid characters in name: {}".format(invalid_chars))
+                    instance_name = input('instance name: ')
+
+            instance_dir = "instances/{}".format(instance_name)
+            if(os.path.exists(instance_dir)):
+                if(input("WARN: instance directory already exists! abort? [Y/n]: ") != "n"):
+                    exit()
+            else:
+                os.mkdir(instance_dir, 0o700)
+
+            privkey = "{}/{}".format(instance_dir, "id_ed25519")
+            pubkey = "{}/{}".format(instance_dir, "id_ed25519.pub")
+
+            if(os.path.isfile(privkey) or os.path.isfile(pubkey)):
+                if(input("WARN: ssh keys already exist for this instance. recreate? [y/N]: ") == "y"):
+                    os.remove(privkey)
+                    os.remove(pubkey)
+
+            if(not os.path.isfile(privkey) and not os.path.isfile(pubkey)):
+                subprocess.run(["ssh-keygen", "-t", "ed25519", "-a", "100", "-f", privkey, "-N", ""])
+
+            
         else:
             subprocess.run(["terraform", "init"], capture_output=True)
             subprocess.run(["terraform", "apply"])
