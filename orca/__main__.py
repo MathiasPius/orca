@@ -1,12 +1,28 @@
 """Orca.
 
 Usage:
-  orca instances deduce [-y]
-  orca instances export
-  orca provision
+  orca instances deduce     attempt to deduce active instances based on subfolders
+                            in instances/, optionally updates terraform/instances.tf 
+                            to reflect this.
+
+  orca instances export     uses terraform output to retrieve real addresses for 
+                            already-provisioned instances and writes them to
+                            ansible/hosts
+
+  orca provision            runs terraform init and terraform apply to bring real
+                            world into compliance with terraform configuration
+
   orca provision new [--name=NAME] [--storage=SIZE] [--drop=DROP] [--image=IMAGE]
+                            interactively generates ssh keys and terraform config
+                            for new NextCloud Instance
+
   orca initialize [--rerun] [--trust=NETWORK]...
-  orca configure
+                            initializes a newly provisioned instance using the 
+                            "managed" role, which installs an orca user and performs
+                            basic Ubuntu hardening like firewall rules and disabling
+                            root login.
+
+  orca configure            configures all instances using the "nextcloud" ansible role
 
 Options:
   -h --help         show this screen.
