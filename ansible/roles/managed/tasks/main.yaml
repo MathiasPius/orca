@@ -33,10 +33,6 @@
     line: "PermitRootLogin no"
     state: present
 
-- name: reset ufw
-  ufw:
-    state: reset
-
 - name: allow ssh through firewall
   ufw:
     rule: allow
