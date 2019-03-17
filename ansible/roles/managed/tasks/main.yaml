@@ -5,7 +5,7 @@
     comment: Orca Management User
     group: sudo
 
-- name: Install ssh key for 'orca'
+- name: install ssh key for 'orca'
   authorized_key:
     user: orca
     key: "{{ lookup('file', orca_public_key ) }}"
@@ -41,8 +41,4 @@
     src: "{{ item }}"
     comment: "allow ssh connections from {{ item }}"
   with_items: "{{ trusted_networks | default('any') }}"
-
-- name: enable firewall
-  ufw:
-    state: enabled
-  notify: restart ssh
+  notify: enable ufw
