@@ -1,4 +1,4 @@
-- name: Install required packages
+- name: install required packages
   become: yes
   apt:
     update_cache: yes

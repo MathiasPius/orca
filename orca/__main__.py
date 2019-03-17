@@ -57,7 +57,10 @@ def instantiate_template(src, dst, dictionary):
 
 
 if __name__ == '__main__':
-    arguments = docopt(__doc__, version='Orca 0.1')
+    if(not os.path.exists('instances')):
+        os.mkdir('instances')
+
+    arguments = docopt(__doc__, version='orca 0.1')
 
     if(arguments['instances']):
         if(arguments['deduce']):
