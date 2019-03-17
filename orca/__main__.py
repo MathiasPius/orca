@@ -48,6 +48,14 @@ from docopt import docopt
 
 valid_instance_name = re.compile(r"[^a-zA-Z_0-9]")
 
+def instantiate_template(src, dst, dictionary):
+    with open(dst, 'w') as instance:
+        with open(src, 'r') as template:
+            for line in template:
+                for name, value in dictionary.items():
+                    instance.write(line.replace('{{{{{}}}}}'.format(name), value))
+
+
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='Orca 0.1')
 
@@ -94,7 +102,7 @@ if __name__ == '__main__':
             with open('ansible/hosts', 'w') as file:
                 file.write("[nextcloud]\n")
                 for host in hosts:
-                    file.write("{} ansible_ssh_private_key_file={} orca_public_key='{}.pub'".format(host['address'], host['ssh_key'], host['ssh_key']))
+                    file.write("{} ansible_ssh_private_key_file={} orca_public_key='{}.pub'\n".format(host['address'], host['ssh_key'], host['ssh_key']))
             
             print("exported {} instances to ansible/hosts".format(len(hosts)))
     elif(arguments['provision']):
@@ -125,16 +133,16 @@ if __name__ == '__main__':
 
             privkey = "{}/{}".format(instance_dir, "id_ed25519")
             pubkey = "{}/{}".format(instance_dir, "id_ed25519.pub")
-
             if(os.path.isfile(privkey) or os.path.isfile(pubkey)):
                 if(input("WARN: ssh keys already exist for this instance. recreate? [y/N]: ") == "y"):
                     os.remove(privkey)
                     os.remove(pubkey)
 
             if(not os.path.isfile(privkey) and not os.path.isfile(pubkey)):
-                subprocess.run(["ssh-keygen", "-t", "ed25519", "-a", "100", "-f", privkey, "-N", ""])
+                subprocess.run(["ssh-keygen", "-t", "ed25519", "-a", "100", "-f", privkey, "-C", "orca@{}".format(instance_name), "-N", ""])
 
-            
+            instantiate_template('templates/000-ssh.tf', "{}/000-ssh.tf".format(instance_dir), {'INSTANCEID': instance_name})
+            instantiate_template('templates/010-nextcloud.tf', "{}/010-nextcloud.tf".format(instance_dir), {'INSTANCEID': instance_name})
         else:
             subprocess.run(["terraform", "init"], capture_output=True)
             subprocess.run(["terraform", "apply"])
