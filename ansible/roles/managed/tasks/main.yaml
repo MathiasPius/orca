@@ -25,10 +25,28 @@
     state: present
   notify: Restart ssh
 
+
 - name: disallow root ssh
   lineinfile: 
     dest: /etc/ssh/sshd_config
     regexp: "^PermitRootLogin"
     line: "PermitRootLogin no"
     state: present
-  notify: Restart ssh
+
+- name: reset ufw
+  ufw:
+    state: reset
+
+- name: allow ssh through firewall
+  ufw:
+    rule: allow
+    proto: tcp
+    port: 22
+    src: "{{ item }}"
+    comment: "allow ssh connections from {{ item }}"
+  with_items: "{{ trusted_networks | default('any') }}"
+
+- name: enable firewall
+  ufw:
+    state: enabled
+  notify: restart ssh
