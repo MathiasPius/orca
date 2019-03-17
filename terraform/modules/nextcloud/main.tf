@@ -1,7 +1,3 @@
-resource "digitalocean_tag" "orcatag" {
-  name = "orca"
-}
-
 resource "digitalocean_tag" "tag" {
     name = "${var.instance_id}"
 }
@@ -21,7 +17,7 @@ resource "digitalocean_droplet" "nextcloud" {
     size                = "${var.vmtype}"
     private_networking  = true
     ipv6                = true
-    tags                = ["${digitalocean_tag.tag.id}", "${digitalocean_tag.orcatag.id}"]
+    tags                = ["${digitalocean_tag.tag.id}"]
     volume_ids          = ["${digitalocean_volume.volume.id}"]
     ssh_keys            = ["${var.ssh_fingerprint}"]
 }
