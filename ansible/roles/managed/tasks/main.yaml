@@ -1,23 +1,23 @@
-- name: "Create management user 'orca'"
+- name: create management user 'orca'
   user:
     name: orca
     shell: /bin/bash
     comment: Orca Management User
     group: sudo
 
-- name: "Install ssh key for 'orca'"
+- name: Install ssh key for 'orca'
   authorized_key:
     user: orca
     key: "{{ lookup('file', orca_public_key ) }}"
 
-- name: Allow 'orca' to sudo without password
+- name: allow 'orca' to sudo without password
   lineinfile:
     dest: /etc/sudoers
     state: present
     line: 'orca ALL=(ALL) NOPASSWD: ALL'
     validate: 'visudo -cf %s'
 
-- name: Disallow password authentication
+- name: disallow password authentication
   lineinfile: 
     dest: /etc/ssh/sshd_config
     regexp: "^PasswordAuthentication"
@@ -25,7 +25,7 @@
     state: present
   notify: Restart ssh
 
-- name: Disallow root ssh
+- name: disallow root ssh
   lineinfile: 
     dest: /etc/ssh/sshd_config
     regexp: "^PermitRootLogin"
