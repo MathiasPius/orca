@@ -5,15 +5,21 @@ Usage:
   orca instances export
   orca provision
   orca provision new <name>
-  orca initialize
+  orca initialize [--rerun] [--trust=NETWORK]...
   orca configure
 
 Options:
+  --rerun           reinitialize using 'orca' user.
+                    this effectively enforces compliance with the 'managed' role,
+                    but using the configured orca user, since root login is disabled
+                    after the first initialization.
+
+  --trust=NETWORK   source networks to trust for ssh connections. [default: any]
+                    can be used multiple times to specify more networks or addresses
+                    e.g. --trust=192.168.0.25 --trust=10.0.0.0/8
+                
   -h --help     Show this screen.
   --version     Show version.
-  --speed=<kn>  Speed in knots [default: 10].
-  --moored      Moored (anchored) mine.
-  --drifting    Drifting mine.
 """
 
 import sys
@@ -81,7 +87,11 @@ if __name__ == '__main__':
             subprocess.run(["terraform", "init"], capture_output=True)
             subprocess.run(["terraform", "apply"])
     elif(arguments['initialize']):
-        subprocess.run(["ansible-playbook", "-i", "ansible/hosts", "ansible/initialize.yaml"])
+        trusted_networks = { 'trusted_networks': arguments['--trust'] }
+        if(arguments['--rerun']):
+            subprocess.run(["ansible-playbook", "-i", "ansible/hosts", "ansible/reinitialize.yaml", "-e", json.dumps(trusted_networks)])
+        else:
+            subprocess.run(["ansible-playbook", "-i", "ansible/hosts", "ansible/initialize.yaml", "-e", json.dumps(trusted_networks)])
     elif(arguments['configure']):
         subprocess.run(["ansible-playbook", "-i", "ansible/hosts", "ansible/configure.yaml"])
     else:
